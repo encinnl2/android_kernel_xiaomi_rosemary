@@ -9,7 +9,7 @@
 #include <linux/susfs_def.h>
 #include <linux/statfs.h>
 
-#define SUSFS_VERSION "v2.1.0"
+#define SUSFS_VERSION "v2.1-blebleble"
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
 #define SUSFS_VARIANT "NON-GKI"
 #else
@@ -47,13 +47,6 @@ struct st_susfs_sus_path_list {
 	struct list_head                        list;
 	struct st_susfs_sus_path                info;
 	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
-};
-
-struct st_external_dir {
-	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
-	bool                                    is_inited;
-	int                                     cmd;
-	int                                     err;
 };
 #endif
 
@@ -193,7 +186,6 @@ struct st_susfs_version {
 /***********************/
 /* sus_path */
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
-void susfs_set_i_state_on_external_dir(void __user **user_info);
 void susfs_add_sus_path(void __user **user_info);
 void susfs_add_sus_path_loop(void __user **user_info);
 #endif
@@ -223,7 +215,6 @@ void susfs_enable_log(void __user **user_info);
 /* spoof_cmdline_or_bootconfig */
 #ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
 void susfs_set_cmdline_or_bootconfig(void __user **user_info);
-int susfs_spoof_cmdline_or_bootconfig(struct seq_file *m);
 #endif
 
 /* open_redirect */
@@ -248,4 +239,3 @@ void susfs_start_sdcard_monitor_fn(void);
 void susfs_init(void);
 
 #endif
-
