@@ -1,0 +1,46 @@
+name: Build Kernel
+
+on:
+  push:
+    branches: [ "cip_susfs" ]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+  pull_request:
+    branches: [ "cip_susfs" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison flex libssl-dev kmod cpio zip \
+            libelf-dev python3
+
+      - name: Download toolchain
+        run: |
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/21.0.0git-20250418-release/Clang-21.0.0git-20250418.tar.gz
+          sudo mkdir -p /opt/tc
+          sudo tar -xzf Clang-21.0.0git-20250418.tar.gz -C /opt/tc
+          echo "/opt/tc/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=/opt/tc/lib" >> $GITHUB_ENV
+
+      - name: Build kernel & modules
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Orion-2.6-WiFi-Fix
+          path: Orion-2.6-WiFi-Fix.zip
