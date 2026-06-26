@@ -22,7 +22,7 @@ build_mod rtl88x2bu CONFIG_RTL8822BU=m
 # Copy .ko files to module directory
 find $PWD/modules -name "*.ko" -exec cp {} $KSUMOD_DIR/system/lib/modules/ \;
 
-# Create module.prop (metadata for KSU-Next Manager)
+# Create module.prop
 cat > $KSUMOD_DIR/module.prop << 'EOF'
 id=wifi_drivers
 name=Realtek WiFi USB Drivers
@@ -35,31 +35,15 @@ EOF
 # Create post-fs-data.sh (load modules at boot)
 cat > $KSUMOD_DIR/post-fs-data.sh << 'SCRIPT'
 #!/system/bin/sh
-# Load WiFi driver modules at boot
 for mod in /system/lib/modules/*.ko; do
     [ -f "$mod" ] && insmod "$mod" 2>/dev/null
 done
 SCRIPT
 chmod +x $KSUMOD_DIR/post-fs-data.sh
 
-# Also copy to AnyKernel3 for recovery flash
-mkdir -p $PWD/AnyKernel3/modules/system/lib/modules
-cp $KSUMOD_DIR/system/lib/modules/*.ko $PWD/AnyKernel3/modules/system/lib/modules/
-
 # Create KSU-Next module zip
 cd $KSUMOD_DIR
 zip -r9 ../WiFi-Drivers-KSU-Next.zip * -x "*.git*"
 cd $PWD
 
-# Also create AnyKernel3 zip (recovery flash)
-cd $PWD/AnyKernel3
-zip -r9 ../WiFi-Modules-Recovery.zip * -x "*.git*" -x "README*"
-cd $PWD
-
-echo "Build complete!"
-echo "  - WiFi-Drivers-KSU-Next.zip (flash via KSU-Next Manager)"
-echo "  - WiFi-Modules-Recovery.zip (flash via recovery)"
-
-
-# Clean up KSU-Next submodule (not needed for module build)
-rm -f $PWD/drivers/kernelsu
+echo "Build complete: WiFi-Drivers-KSU-Next.zip"
