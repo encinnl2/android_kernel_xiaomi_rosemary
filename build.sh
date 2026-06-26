@@ -32,14 +32,62 @@ author=encinnl2
 description=Driver untuk RTL8188EU, RTL8812AU, RTL88X2BU WiFi USB dongle
 EOF
 
-# Create post-fs-data.sh (load modules at boot)
+# Create post-fs-data.sh (load modules at boot with optimized parameters)
 cat > $KSUMOD_DIR/post-fs-data.sh << 'SCRIPT'
 #!/system/bin/sh
-for mod in /system/lib/modules/*.ko; do
-    [ -f "$mod" ] && insmod "$mod" 2>/dev/null
-done
+
+# Load each WiFi module with optimized performance parameters
+# rtw_power_mgnt=0  -> Disable power saving for lowest latency
+# rtw_enusbss=0     -> Disable USB selective suspend
+# rtw_ips_mode=0    -> Disable Idle Power Save mode
+
+MODDIR=/system/lib/modules
+
+# RTL8188EU
+if [ -f $MODDIR/8188eu.ko ]; then
+    insmod $MODDIR/8188eu.ko \
+        rtw_power_mgnt=0 \
+        rtw_enusbss=0 \
+        rtw_ips_mode=0 2>/dev/null
+fi
+
+# RTL8812AU
+if [ -f $MODDIR/8812au.ko ]; then
+    insmod $MODDIR/8812au.ko \
+        rtw_power_mgnt=0 \
+        rtw_enusbss=0 \
+        rtw_ips_mode=0 2>/dev/null
+fi
+
+# RTL88X2BU (with BT coexistence)
+if [ -f $MODDIR/88x2bu.ko ]; then
+    insmod $MODDIR/88x2bu.ko \
+        rtw_power_mgnt=0 \
+        rtw_enusbss=0 \
+        rtw_ips_mode=0 2>/dev/null
+fi
 SCRIPT
 chmod +x $KSUMOD_DIR/post-fs-data.sh
+
+# Create service.sh (runtime optimizations after boot)
+cat > $KSUMOD_DIR/service.sh << 'SCRIPT'
+#!/system/bin/sh
+
+# Wait for WiFi interface to appear
+for i in $(seq 1 30); do
+    if iw dev 2>/dev/null | grep -q Interface; then
+        break
+    fi
+    sleep 1
+done
+
+# Apply runtime optimizations to all wlan interfaces
+for iface in $(iw dev 2>/dev/null | grep Interface | awk '{print $2}'); do
+    # Disable power saving for max performance
+    iw dev $iface set power_save off 2>/dev/null
+done
+SCRIPT
+chmod +x $KSUMOD_DIR/service.sh
 
 # Create KSU-Next module zip
 cd $KSUMOD_DIR
