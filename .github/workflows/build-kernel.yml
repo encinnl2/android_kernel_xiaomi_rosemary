@@ -40,8 +40,8 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
-      - name: Upload zip
+      - name: Upload KSU-Next module
         uses: actions/upload-artifact@v4
         with:
-          name: Orion-2.6-WiFi-Fix
-          path: Orion-2.6-WiFi-Fix.zip
+          name: WiFi-Drivers-KSU-Next
+          path: WiFi-Drivers-KSU-Next.zip
