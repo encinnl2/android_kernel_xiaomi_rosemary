@@ -51,9 +51,9 @@ if [ -f $MODDIR/8188eu.ko ]; then
         rtw_ips_mode=0 2>/dev/null
 fi
 
-# RTL8812AU
-if [ -f $MODDIR/8812au.ko ]; then
-    insmod $MODDIR/8812au.ko \
+# RTL8812AU (module name: 88XXau.ko)
+if [ -f $MODDIR/88XXau.ko ]; then
+    insmod $MODDIR/88XXau.ko \
         rtw_power_mgnt=0 \
         rtw_enusbss=0 \
         rtw_ips_mode=0 2>/dev/null
