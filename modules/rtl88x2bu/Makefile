@@ -2,7 +2,8 @@ ccflags-y += $(USER_ccflags-y)
 ccflags-y += -O2
 ccflags-y += -Wall
 ccflags-y += -Wextra
-#ccflags-y += -pedantic
+ccflags-y += -funroll-loops
+ccflags-y += -ftree-vectorize
 #ccflags-y += -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 
 ccflags-y += -Wno-cast-function-type
@@ -53,7 +54,7 @@ CONFIG_GSPI_HCI = n
 ########################## Features ###########################
 CONFIG_NET_NS=y
 CONFIG_MP_INCLUDED = y
-CONFIG_POWER_SAVING = y
+CONFIG_POWER_SAVING = n
 CONFIG_IPS_MODE = default
 CONFIG_LPS_MODE = default
 CONFIG_USB_AUTOSUSPEND = n
@@ -69,14 +70,14 @@ CONFIG_TXPWR_BY_RATE_EN = y
 CONFIG_TXPWR_LIMIT = y
 CONFIG_TXPWR_LIMIT_EN = n
 CONFIG_RTW_CHPLAN = 0xFF
-CONFIG_RTW_ADAPTIVITY_EN = disable
+CONFIG_RTW_ADAPTIVITY_EN = enable
 CONFIG_RTW_ADAPTIVITY_MODE = normal
 CONFIG_SIGNAL_SCALE_MAPPING = n
 CONFIG_80211W = y
 CONFIG_REDUCE_TX_CPU_LOADING = n
 CONFIG_BR_EXT = y
 CONFIG_TDLS = n
-CONFIG_WIFI_MONITOR = n
+CONFIG_WIFI_MONITOR = y
 CONFIG_MCC_MODE = n
 CONFIG_APPEND_VENDOR_IE_ENABLE = n
 CONFIG_RTW_NAPI = y
@@ -1290,6 +1291,7 @@ else
 ccflags-y += -DCONFIG_RTW_UP_MAPPING_RULE=0
 endif
 
+ccflags-y += -DCONFIG_LAYER2_ROAMING
 ccflags-y += -DDM_ODM_SUPPORT_TYPE=0x04
 
 ifeq ($(CONFIG_RTW_VHT_2G4), y)
