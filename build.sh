@@ -20,7 +20,10 @@ build_mod rtl8188eu CONFIG_RTL8188EU=m
 build_mod rtl8812au CONFIG_88XXAU=m
 build_mod rtl88x2bu CONFIG_RTL8822BU=m
 
-# Collect modules
+# Collect in-kernel modules (kernelsu.ko etc.)
+find $PWD/out -name "*.ko" -exec cp {} $PWD/AnyKernel3/modules/system/lib/modules/ \;
+
+# Collect external WiFi modules
 mkdir -p $PWD/AnyKernel3/modules/system/lib/modules
 find $PWD/modules -name "*.ko" -exec cp {} $PWD/AnyKernel3/modules/system/lib/modules/ \;
 
