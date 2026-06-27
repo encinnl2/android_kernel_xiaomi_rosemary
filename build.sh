@@ -27,13 +27,15 @@ build_mod rtl88x2bu CONFIG_RTL8822BU=m
 
 find $PWD/modules -name "*.ko" -exec cp {} $KSUMOD_DIR/system/lib/modules/ \;
 
-cat > $KSUMOD_DIR/module.prop << 'EOF'
+BUILD_DATE=$(date +%Y%m%d)
+cat > $KSUMOD_DIR/module.prop << EOF
 id=wifi_drivers
 name=Realtek WiFi USB Drivers
-version=1.0
-versionCode=1
+version=v1.1-$BUILD_DATE
+versionCode=$BUILD_DATE
 author=encinnl2
-description=Driver untuk RTL8188EU, RTL8812AU, RTL88X2BU WiFi USB dongle
+description=Driver untuk RTL8188EU (injection), RTL8812AU, RTL88X2BU WiFi USB dongle
+updateJson=https://raw.githubusercontent.com/encinnl2/android_kernel_xiaomi_rosemary/cip_susfs/update.json
 EOF
 
 cat > $KSUMOD_DIR/post-fs-data.sh << 'SCRIPT'
