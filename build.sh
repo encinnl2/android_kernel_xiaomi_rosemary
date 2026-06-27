@@ -18,6 +18,8 @@ build_mod() {
 # Clone aircrack-ng 8188eu driver (injection patched)
 rm -rf modules/rtl8188eu
 git clone --depth 1 https://github.com/aircrack-ng/rtl8188eus modules/rtl8188eu
+# Fix Clang compatibility: 'bool' not 'int' in newer kernels
+sed -i 's/extern int console_suspend_enabled/extern bool console_suspend_enabled/' modules/rtl8188eu/os_dep/linux/usb_intf.c
 build_mod rtl8188eu CONFIG_RTL8188EU=m
 
 build_mod rtl8812au CONFIG_88XXAU=m
