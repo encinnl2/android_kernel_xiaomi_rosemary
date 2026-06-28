@@ -28,42 +28,91 @@ BUILD_DATE=$(date +%Y%m%d)
 cat > $KSUMOD_DIR/module.prop << PROPROP
 id=wifi_drivers
 name=Realtek WiFi USB Drivers
-version=v1.1-$BUILD_DATE
+version=v2.0-$BUILD_DATE
 versionCode=$BUILD_DATE
 author=encinnl2
-description=Driver untuk RTL8188EU (injection), RTL8812AU, RTL88X2BU WiFi USB dongle
+description=Driver RTL8188EU(injection) RTL8812AU RTL88X2BU | txpower max+usb_fast+no_timeout+tuned
 updateJson=https://raw.githubusercontent.com/encinnl2/android_kernel_xiaomi_rosemary/cip_susfs/update.json
 PROPROP
 
 cat > $KSUMOD_DIR/post-fs-data.sh << 'SCRIPT1'
 #!/system/bin/sh
 MODDIR=/system/lib/modules
+
+# Load 8188eu with tweaks
 if [ -f $MODDIR/8188eu.ko ]; then
-    insmod $MODDIR/8188eu.ko rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=0 rtw_ap_mode=1 2>/dev/null
+    insmod $MODDIR/8188eu.ko \
+        rtw_power_mgnt=0 \
+        rtw_enusbss=0 \
+        rtw_ips_mode=0 \
+        rtw_ap_mode=1
 fi
+
+# Load 8812au
 if [ -f $MODDIR/88XXau.ko ]; then
-    insmod $MODDIR/88XXau.ko rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=0 2>/dev/null
+    insmod $MODDIR/88XXau.ko \
+        rtw_power_mgnt=0 \
+        rtw_enusbss=0 \
+        rtw_ips_mode=0
 fi
+
+# Load 8822bu
 if [ -f $MODDIR/88x2bu.ko ]; then
-    insmod $MODDIR/88x2bu.ko rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=0 2>/dev/null
+    insmod $MODDIR/88x2bu.ko \
+        rtw_power_mgnt=0 \
+        rtw_enusbss=0 \
+        rtw_ips_mode=0
 fi
 SCRIPT1
 chmod +x $KSUMOD_DIR/post-fs-data.sh
 
 cat > $KSUMOD_DIR/service.sh << 'SCRIPT2'
 #!/system/bin/sh
-sleep 10
+sleep 5
 
-for i in $(seq 1 30); do
-    if iw dev 2>/dev/null | grep -q Interface; then break; fi
+MAXWAIT=30
+for i in $(seq 1 $MAXWAIT); do
+    iw dev 2>/dev/null | grep -q Interface && break
     sleep 1
 done
 
 for iface in $(iw dev 2>/dev/null | grep Interface | awk '{print $2}'); do
+
+    # Matiin power saving
     iw dev $iface set power_save off 2>/dev/null
+
+    # Regulatory US -> txpower maksimal
     iw reg set US 2>/dev/null
+
+    # Paksa txpower 30dBm (maks)
     iw dev $iface set txpower fixed 3000 2>/dev/null
+
+    # Matiin USB autosuspend buat interface ini
+    [ -e /sys/class/net/$iface/device/power/control ] && \
+        echo on > /sys/class/net/$iface/device/power/control
+
+    # Set RTS threshold rendah
+    iw phy $(iw dev $iface info | awk '/wiphy/{print $2}') set rts 2500 2>/dev/null
+
+    # Set fragmentation threshold
+    iw phy $(iw dev $iface info | awk '/wiphy/{print $2}') set frag 1024 2>/dev/null
+
+    # Disable 802.11b rates (1,2 Mbps) biar throughput lebih gede
+    iw phy $(iw dev $iface info | awk '/wiphy/{print $2}') set bitrates legacy-2.4 12 18 24 36 48 54 2>/dev/null
+
+    # Retry limit biar gak terlalu banyak backoff
+    iwconfig $iface retry limit 2 2>/dev/null
 done
+
+# Matiin USB autosuspend global
+echo on > /sys/bus/usb/devices/usb1/power/control 2>/dev/null
+echo on > /sys/bus/usb/devices/usb2/power/control 2>/dev/null
+
+# Increase network buffer (kurangin RX drop)
+echo 262144 > /proc/sys/net/core/rmem_max 2>/dev/null
+echo 262144 > /proc/sys/net/core/wmem_max 2>/dev/null
+echo 65536 > /proc/sys/net/core/rmem_default 2>/dev/null
+echo 65536 > /proc/sys/net/core/netdev_max_backlog 2>/dev/null
 SCRIPT2
 chmod +x $KSUMOD_DIR/service.sh
 
