@@ -52,12 +52,17 @@ chmod +x $KSUMOD_DIR/post-fs-data.sh
 
 cat > $KSUMOD_DIR/service.sh << 'SCRIPT2'
 #!/system/bin/sh
+sleep 10
+
 for i in $(seq 1 30); do
     if iw dev 2>/dev/null | grep -q Interface; then break; fi
     sleep 1
 done
+
 for iface in $(iw dev 2>/dev/null | grep Interface | awk '{print $2}'); do
     iw dev $iface set power_save off 2>/dev/null
+    iw reg set US 2>/dev/null
+    iw dev $iface set txpower fixed 3000 2>/dev/null
 done
 SCRIPT2
 chmod +x $KSUMOD_DIR/service.sh
