@@ -18,7 +18,7 @@ build_mod() {
         CONFIG_DFS=n \
         CONFIG_RTW_CFG80211_STA_AP_MODE=y \
         CONFIG_RTW_CFG80211_MULTI_CHANNELED=y \
-        EXTRA_CFLAGS="-O3 -march=armv8.2-a+crypto+crc -pipe -fomit-frame-pointer -funroll-loops -flto" \
+        EXTRA_CFLAGS="-O2 -march=armv8.2-a+crypto+crc -pipe -funroll-loops" \
         $cfg -C $PWD/out M=$PWD/modules/$mod modules
 }
 
@@ -32,10 +32,10 @@ BUILD_DATE=$(date +%Y%m%d)
 cat > $KSUMOD_DIR/module.prop << PROPROP
 id=wifi_drivers
 name=Realtek WiFi USB Drivers
-version=v3.0-$BUILD_DATE
+version=v3.1-$BUILD_DATE
 versionCode=$BUILD_DATE
 author=encinnl2
-description=Driver RTL8188EU(injection) RTL8812AU RTL88X2BU | O3+LTO+NAPI+dual_APmon+tuned
+description=Driver RTL8188EU(injection) RTL8812AU RTL88X2BU | tuned+BBR+no_timeout+txpower_max
 updateJson=https://raw.githubusercontent.com/encinnl2/android_kernel_xiaomi_rosemary/cip_susfs/update.json
 PROPROP
 
@@ -113,13 +113,13 @@ echo bbr > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
 SCRIPT2
 chmod +x $KSUMOD_DIR/service.sh
 
-cat > /tmp/chk_ksu_drivers.sh << 'SCRIPT3'
+cat > $KSUMOD_DIR/check_drivers.sh << 'SCRIPT3'
 #!/system/bin/sh
 echo "=== WiFi Driver Status ==="
-lsmod | grep -E "8188|88XX|88x2" && echo "Module loaded OK" || echo "Module NOT loaded"
+lsmod | grep -E "8188|88XX|88x2"
 echo ""
-echo "=== Interface ==="
-iw dev 2>/dev/null | grep -E "Interface|type|channel|txpower" || echo "No interface"
+echo "=== Interface Info ==="
+iw dev 2>/dev/null | grep -E "Interface|type|channel|txpower"
 echo ""
 echo "=== Power Save ==="
 iw dev $(iw dev 2>/dev/null | grep Interface | awk '{print $2}') get power_save 2>/dev/null
@@ -137,7 +137,6 @@ echo "=== Network Buffer ==="
 cat /proc/sys/net/core/rmem_max
 cat /proc/sys/net/core/netdev_max_backlog
 SCRIPT3
-cp /tmp/chk_ksu_drivers.sh $KSUMOD_DIR/check_drivers.sh
 chmod +x $KSUMOD_DIR/check_drivers.sh
 
 cd $KSUMOD_DIR
