@@ -12,9 +12,20 @@ build_mod() {
     local mod=$1 cfg=$2
     echo "Building $mod..."
     make -j$(nproc --all) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang \
-        EXTRA_CFLAGS="-DCONFIG_RTW_ADAPTIVITY_EN=0 -DCONFIG_RTW_NAPI -DCONFIG_RTW_SKB_RECYCLE -DCONFIG_RTW_CFG80211_STA_AP_MODE -DCONFIG_RTW_CFG80211_MULTI_CHANNELED -O2 -pipe -funroll-loops" \
         $cfg -C $PWD/out M=$PWD/modules/$mod modules
 }
+
+rm -rf modules/rtl8188eu
+git clone --depth 1 https://github.com/aircrack-ng/rtl8188eus modules/rtl8188eu
+sed -i 's/extern int console_suspend_enabled/extern bool console_suspend_enabled/' modules/rtl8188eu/os_dep/linux/usb_intf.c
+
+# Tambah flags langsung ke Makefile tiap driver
+for mkf in modules/rtl8188eu/Makefile modules/rtl8812au/Makefile modules/rtl88x2bu/Makefile; do
+    [ -f "$mkf" ] && echo "
+EXTRA_CFLAGS += -DCONFIG_RTW_ADAPTIVITY_EN=0 -DCONFIG_RTW_NAPI -DCONFIG_RTW_SKB_RECYCLE
+EXTRA_CFLAGS += -DCONFIG_RTW_CFG80211_STA_AP_MODE -DCONFIG_RTW_CFG80211_MULTI_CHANNELED
+EXTRA_CFLAGS += -O2 -pipe -funroll-loops" >> "$mkf"
+done
 
 build_mod rtl8188eu CONFIG_RTL8188EU=m
 build_mod rtl8812au CONFIG_88XXAU=m
@@ -26,10 +37,10 @@ BUILD_DATE=$(date +%Y%m%d)
 cat > $KSUMOD_DIR/module.prop << PROPROP
 id=wifi_drivers
 name=Realtek WiFi USB Drivers
-version=v3.2-$BUILD_DATE
+version=v3.3-$BUILD_DATE
 versionCode=$BUILD_DATE
 author=encinnl2
-description=Driver RTL8188EU(injection) RTL8812AU RTL88X2BU | NAPI+dual_AP+Bypass_DFS+tuned
+description=Driver RTL8188EU(injection) RTL8812AU RTL88X2BU | NAPI+bypass_DFS+dual_AP+tuned
 updateJson=https://raw.githubusercontent.com/encinnl2/android_kernel_xiaomi_rosemary/cip_susfs/update.json
 PROPROP
 
